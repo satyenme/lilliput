@@ -1,0 +1,36 @@
+name: "Sync OpenJDK Upstream"
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+env:
+  UPSTREAM_REMOTE: https://github.com/openjdk/jdk.git
+  LOCAL_BRANCH: master
+
+permissions:
+  contents: write
+
+jobs:
+  sync-openjdk:
+    runs-on: ubuntu-latest
+    name: "Sync OpenJDK to Lilliput"
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.LOCAL_BRANCH }}
+
+      - name: "Configure git user"
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: "Merge openjdk/jdk:master to lilliput:master"
+        run: |
+          git fetch $UPSTREAM_REMOTE master || exit 1
+          git merge -m "Merge upstream openjdk/jdk" FETCH_HEAD
+
+      - name: "Push to lilliput"
+        run: git push origin $LOCAL_BRANCH
